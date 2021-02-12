@@ -1,0 +1,14 @@
+byte JAW = 1
+byte VACUUM = 2
+byte COMBINED = 3
+byte type
+
+float64 item_size
+bool close
+
+bool suction_active
+float64 cylinder_position
+
+---
+string message
+

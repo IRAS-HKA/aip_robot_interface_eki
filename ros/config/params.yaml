@@ -1,0 +1,5 @@
+Server:
+  ros__parameters:
+    host: '10.166.32.145' # IP Adress of robot
+    port: 54600 
+    meta_port: 54601
