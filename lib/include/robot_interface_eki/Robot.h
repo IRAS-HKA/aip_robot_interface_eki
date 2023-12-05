@@ -2,7 +2,7 @@
 
 #include <functional>
 
-#include <aip/common/Component.h>
+#include <cpp_core/Component.h>
 
 #include <robot_interface_eki/core/EKInterface.h>
 #include <robot_interface_eki/core/CommandSequence.h>

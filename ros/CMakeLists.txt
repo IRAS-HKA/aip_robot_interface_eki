@@ -16,9 +16,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 endif()
 
 #IMPORTANT
-include_directories(include)
-
-add_subdirectory (../lib robot_interface_eki_lib)
+# add_subdirectory (../lib robot_interface_eki_lib)
 
 
 # find dependencies
@@ -28,7 +26,14 @@ find_package(rclpy REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
-find_package(ros_core REQUIRED)
+find_package(cpp_core REQUIRED)
+find_package(robot_interface_eki_lib REQUIRED)
+
+include_directories(
+  include
+  ${cpp_core_INCLUDE_DIRS}
+  ${robot_interface_eki_lib_INCLUDE_DIRS}
+)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "srv/Move.srv"
@@ -38,10 +43,11 @@ rosidl_generate_interfaces(${PROJECT_NAME}
 
 add_executable(Server src/Server.cpp)
 ament_target_dependencies(Server
-  rclcpp std_srvs)
+  rclcpp std_srvs cpp_core robot_interface_eki_lib)
 
 target_link_libraries(Server
-  robot_interface
+  cpp_core::cpp_core_lib
+  robot_interface_eki_lib::robot_interface_eki_library
 )
 
 rosidl_target_interfaces(Server

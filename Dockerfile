@@ -1,68 +1,67 @@
 ##############################################################################
 ##                                 Base Image                               ##
 ##############################################################################
-ARG BASE_IMAGE=ubuntu:18.04
-FROM ${BASE_IMAGE}
-ARG DEBIAN_FRONTEND=noninteractive
-
-##############################################################################
-##                                 ROS2 Install                             ##
-##############################################################################
-# Set locate
-RUN apt update && apt install -y \
-    language-pack-ja-base \
-    language-pack-ja \
-    && apt clean \
-    && rm -rf /var/lib/apt/lists/*
-RUN locale-gen en_US en_US.UTF-8
-RUN update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
-RUN export LANG=en_US.UTF-8
-
-# Add the ROS 2 apt repository
-RUN apt update && apt install -y \
-    curl \
-    gnupg2 \
-    lsb-release
-RUN curl -s https://raw.githubusercontent.com/ros/rosdistro/master/ros.asc | apt-key add -
-RUN sh -c 'echo "deb http://packages.ros.org/ros2/ubuntu `lsb_release -cs` main" > /etc/apt/sources.list.d/ros2-latest.list'
-
-# ROS2 distro
 ARG ROS_DISTRO=dashing
-ENV ROS_DISTRO ${ROS_DISTRO}
+FROM ros:$ROS_DISTRO-ros-base
+ENV TZ=Europe/Berlin
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+RUN rosdep update --rosdistro $ROS_DISTRO
 
-
-# Install ROS2 packages
+##############################################################################
+##                                 Global Dependecies                       ##
+##############################################################################
 RUN apt update && apt install -y \
-    ros-${ROS_DISTRO}-desktop \
+    ros-$ROS_DISTRO-ament-* \
     python3-colcon-common-extensions \
-    python3-rosdep \
     python3-argcomplete \
-    && apt clean \
-    && rm -rf /var/lib/apt/lists/*
-RUN rosdep init && rosdep update
-
-# set entrypoint (source /opt/ros/${ROS_DISTRO}/setup.bash)
-COPY ros_entrypoint.sh /
-RUN chmod +x ros_entrypoint.sh
-ENTRYPOINT ["/ros/ros_entrypoint.sh"]
-CMD ["bash"]
+    && apt clean && rm -rf /var/lib/apt/lists/*
 
 ##############################################################################
-##                           Make ROS Workspace                             ##
+##                                 Create User                              ##
 ##############################################################################
-RUN mkdir -p /ros2_ws/src
+ARG USER=docker
+ARG PASSWORD=docker
+ARG UID=1000
+ARG GID=1000
+ENV UID=$UID
+ENV GID=$GID
+ENV USER=$USER
+RUN groupadd -g "$GID" "$USER"  && \
+    useradd -m -u "$UID" -g "$GID" --shell $(which bash) "$USER" -G sudo && \
+    echo "$USER:$PASSWORD" | chpasswd && \
+    echo "%sudo ALL=(ALL) NOPASSWD: ALL" > /etc/sudoers.d/sudogrp && \
+    chmod 0440 /etc/sudoers.d/sudogrp && \
+    chown ${UID}:${GID} -R /home/${USER}
+RUN echo "source /opt/ros/$ROS_DISTRO/setup.bash" >> /etc/bash.bashrc
 
-WORKDIR /ros2_ws/src
+USER $USER 
+RUN mkdir -p /home/$USER/ros2_ws/src
+
+##############################################################################
+##                                 User Dependecies                         ##
+##############################################################################
+WORKDIR /home/$USER/ros2_ws/src
+RUN git config --global advice.detachedHead false
+
 COPY . ./robot_interface_eki
 
-RUN git clone -b dev cpp_core
+# ENV LD_LIBRARY_PATH=/opt/ros/${ROS_DISTRO}/lib:/home/$USER/ros2_ws/build/robot_interface_eki/lib
 
-WORKDIR /ros2_ws
-RUN	/bin/bash -c "source /opt/ros/${ROS_DISTRO}/setup.bash; colcon build --symlink-install; source /ros2_ws/install/setup.bash"
+##############################################################################
+##                                 Build ROS and run                        ##
+##############################################################################
+WORKDIR /home/$USER/ros2_ws
+RUN rosdep update --rosdistro $ROS_DISTRO
+RUN rosdep install --from-paths src --ignore-src -y
+RUN . /opt/ros/$ROS_DISTRO/setup.sh && colcon build --symlink-install --packages-select cpp_core
+RUN . /opt/ros/$ROS_DISTRO/setup.sh && . /home/$USER/ros2_ws/install/setup.sh && colcon build --symlink-install --packages-select robot_interface_eki_lib
+RUN . /opt/ros/$ROS_DISTRO/setup.sh && . /home/$USER/ros2_ws/install/setup.sh && colcon build --symlink-install
+RUN echo "source /home/$USER/ros2_ws/install/setup.bash" >> /home/$USER/.bashrc
 
-ENV LD_LIBRARY_PATH=/opt/ros/${ROS_DISTRO}/lib:/ros2_ws/build/robot_interface_eki/lib
+RUN sudo sed --in-place --expression \
+    '$isource "/home/$USER/ros2_ws/install/setup.bash"' \
+    /ros_entrypoint.sh
 
-WORKDIR /ros2_ws/src/robot_interface_eki/ros
-RUN chmod -R +x scripts
+CMD /bin/bash
 
-WORKDIR /ros2_ws
+# RUN chmod -R +x scripts

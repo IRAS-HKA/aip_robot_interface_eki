@@ -1,4 +1,4 @@
-#include <aip/rbt/MoveCommand.h>
+#include <robot_interface_eki/MoveCommand.h>
 
 rbt::MoveCommand::MoveCommand(const rbt::MoveCommand *base)
 {

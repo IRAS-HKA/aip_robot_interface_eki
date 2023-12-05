@@ -3,8 +3,8 @@
  * Module : ROS2-Node "Server interface"
  * Purpose : Provides ROS2-Service multiple service
  *           in a single node to use an easy
- *           client with python to send commands to KUKA 
- * 
+ *           client with python to send commands to KUKA
+ *
  * @author Javier Moviglia
  * @since 1.0.0 (2021.01.15)
  *********************************************************/
@@ -15,7 +15,7 @@
 #include <robot_interface_eki/srv/grip.hpp>
 #include <robot_interface_eki/srv/move.hpp>
 
-#include <aip/rbt/Robot.h>
+#include <robot_interface_eki/Robot.h>
 
 class Server : public rclcpp::Node
 {
@@ -33,5 +33,4 @@ public:
     rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr run_srv_;
 
     rbt::Robot robot;
-
 };

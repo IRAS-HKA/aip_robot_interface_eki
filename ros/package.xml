@@ -19,6 +19,8 @@
   <depend>rclpy</depend>
   <depend>rclcpp</depend>
   <depend>std_srvs</depend>
+  <depend>cpp_core</depend>
+  <depend>robot_interface_eki_lib</depend>
 
   <member_of_group>rosidl_interface_packages</member_of_group>
   <test_depend>ament_lint_auto</test_depend>
