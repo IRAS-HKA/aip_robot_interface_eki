@@ -72,5 +72,11 @@ ros2 run robot_interface_eki client.py
 This file is the one you must modify to send commands to the robot. There you will also find several examples so you can get started quickly.
 
 
+# Testing
 
+Test if port is open
+```bash
+sudo hping3 -S -p 54601 10.166.32.145
+```
+if the reply has flags=RA, you received a reset response, so the port is closed, but if you receive flags=SA, the port is open
 

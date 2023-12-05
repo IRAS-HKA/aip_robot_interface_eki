@@ -14,6 +14,8 @@ RUN apt update && apt install -y \
     ros-$ROS_DISTRO-ament-* \
     python3-colcon-common-extensions \
     python3-argcomplete \
+    net-tools \
+    iputils-ping \
     && apt clean && rm -rf /var/lib/apt/lists/*
 
 ##############################################################################
@@ -53,9 +55,7 @@ COPY . ./robot_interface_eki
 WORKDIR /home/$USER/ros2_ws
 RUN rosdep update --rosdistro $ROS_DISTRO
 RUN rosdep install --from-paths src --ignore-src -y
-RUN . /opt/ros/$ROS_DISTRO/setup.sh && colcon build --symlink-install --packages-select cpp_core
-RUN . /opt/ros/$ROS_DISTRO/setup.sh && . /home/$USER/ros2_ws/install/setup.sh && colcon build --symlink-install --packages-select robot_interface_eki_lib
-RUN . /opt/ros/$ROS_DISTRO/setup.sh && . /home/$USER/ros2_ws/install/setup.sh && colcon build --symlink-install
+RUN . /opt/ros/$ROS_DISTRO/setup.sh && colcon build --symlink-install
 RUN echo "source /home/$USER/ros2_ws/install/setup.bash" >> /home/$USER/.bashrc
 
 RUN sudo sed --in-place --expression \
